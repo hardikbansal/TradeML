@@ -29,7 +29,7 @@ class regression():
 		self.parser.add_option('--batch_size', type='int', default=1, dest='batch_size')
 		self.parser.add_option('--max_epoch', type='int', default=20, dest='max_epoch')
 		self.parser.add_option('--feature_size', type='int', default=20, dest='feature_size')
-		self.parser.add_option('--test', action="store_true", default=True, dest="test")
+		self.parser.add_option('--test', action="store_true", default=False, dest="test")
 		self.parser.add_option('--model', type='string', default="reg", dest='model_type')
 		self.parser.add_option('--dataset_dir', type='string', default="./datasets/apple", dest='dataset_dir')
 
@@ -65,7 +65,7 @@ class regression():
 
 		size = np.shape(self.adj_close)
 
-		self.num_train_days = 0.9*size[1]
+		self.num_train_days = (int)(0.9*size[1])
 
 		# Dividing the data into test and train data
 		# Here the train vector is 90% or original data
@@ -86,28 +86,37 @@ class regression():
 		if(self.model == "cnn"):
 			self.train_data = np.reshape(self.train_data, [1, -1, 1])
 			self.test_data = np.reshape(self.test_data, [1, -1, 1])
-		
 
-		# print(self.train_data.shape)
+	
 
+	def normalize_data(self, data):
+
+		return (data - np.mean(data, axis=1, keepdims=True))/np.std(data, axis=1, keepdims=True)
 
 	def get_inputs(self, itr, feature_size, mode="train"):
 
-		if(self.model == "simple"):
+		# if(self.model == "simple"):
+
+		# 	if(mode == "train"):
+		# 		mean_val, std_val = np.mean(self.train_data[:, itr:itr+feature_size], keepdims=True)
+		# 		return (self.train_data[:, itr:itr+feature_size] - mean_val)/std_val, (self.train_data[:, itr+feature_size:itr+feature_size+1] - mean_val)/std_val
+		# 	elif(mode == "test"):
+		# 		mean_val, std_val = np.mean(self.test_data[:, itr:itr+feature_size], keepdims=True)
+		# 		return (self.test_data[:, itr:itr+feature_size] - mean_val)/std_val, (self.test_data[:, itr+feature_size:itr+feature_size+1] - mean_val)/std_val
+
+		if(self.model == "cnn"):
 
 			if(mode == "train"):
-				mean_val, std_val = np.mean(self.train_data[:, itr:itr+feature_size], keepdims=True)
-				return (self.train_data[:, itr:itr+feature_size] - mean_val)/std_val, (self.train_data[:, itr+feature_size:itr+feature_size+1] - mean_val)/std_val
-			elif(mode == "test"):
-				mean_val, std_val = np.mean(self.test_data[:, itr:itr+feature_size], keepdims=True)
-				return (self.test_data[:, itr:itr+feature_size] - mean_val)/std_val, (self.test_data[:, itr+feature_size:itr+feature_size+1] - mean_val)/std_val
 
-		elif(self.model == "cnn"):
-
-			if(mode == "train"):
-				return self.train_data[:, itr:itr+feature_size], np.reshape(self.train_data[:, itr+feature_size:itr+feature_size+1],[self.batch_size,-1])
+				temp_data = self.normalize_data(self.train_data[:, itr:itr+feature_size+1])
+				# print(temp_data.shape)
+				return temp_data[:, :feature_size], np.reshape(temp_data[:, feature_size:feature_size+1],[self.batch_size,-1])
+			
 			elif(mode == "test"):
-				return self.test_data[:, itr:itr+feature_size], np.reshape(self.test_data[:, itr+feature_size:itr+feature_size+1],[self.batch_size,-1])
+
+				temp_data = self.normalize_data(self.test_data[:, itr:itr+feature_size+1])
+				return temp_data[:, itr:itr+feature_size], np.reshape(temp_data[:, itr+feature_size:itr+feature_size+1],[self.batch_size,-1])
+
 
 	def simple_model_setup(self):
 
@@ -125,8 +134,8 @@ class regression():
 
 		with tf.variable_scope("model_cnn") as scope:
 
-			self.input_feature = tf.placeholder(tf.float32, [self.batch_size, self.feature_size, self.feature_depth])
-			self.output_value = tf.placeholder(tf.float32, [self.batch_size, 1])
+			self.input_feature = tf.placeholder(tf.float32, [None, self.feature_size, self.feature_depth])
+			self.output_value = tf.placeholder(tf.float32, [None, 1])
 
 			o_c1 = tf.nn.relu(general_conv1d(self.input_feature, 64, 2, 1, padding="same", name="conv1"))
 			o_c1 = tf.layers.max_pooling1d(o_c1, 2, 2, padding="valid")
@@ -144,16 +153,25 @@ class regression():
 
 	def model_setup(self):
 
-		with tf.variable_scope("model") as scope:
+		# Initially do_setup is set to true
 
-			if(self.model == "simple"):
-				self.simple_model_setup()
-			elif(self.model == "cnn"):
-				self.cnn_model_setup()
+		if(self.do_setup):
 
+			with tf.variable_scope("model") as scope:
+
+				if(self.model == "simple"):
+					self.simple_model_setup()
+				elif(self.model == "cnn"):
+					self.cnn_model_setup()
+
+
+		# Printing the trainable variables for the model
 
 		self.model_vars = tf.trainable_variables()
 		for var in self.model_vars: print(var.name, var.get_shape())
+
+		# Once the model is done setting up. we set it to false 
+		# so that we don't set it up again in future
 
 		self.do_setup = False
 
@@ -161,7 +179,7 @@ class regression():
 	def loss_setup(self):
 
 		self.loss = tf.reduce_mean(tf.squared_difference(self.pred, self.output_value))
-		optimizer = tf.train.AdamOptimizer(0.002, beta1=0.5)
+		optimizer = tf.train.AdamOptimizer(0.0001, beta1=0.5)
 		self.loss_optimizer = optimizer.minimize(self.loss)
 
 
@@ -172,7 +190,8 @@ class regression():
 		self.load_dataset()
 		self.divide_data()
 
-		# sys.exit()
+		print(self.num_train_days)
+
 
 		init = tf.global_variables_initializer()
 		saver = tf.train.Saver()
@@ -180,7 +199,7 @@ class regression():
 		
 		if not os.path.exists(self.check_dir):
 			os.makedirs(self.check_dir)
-
+		
 
 		with tf.Session() as sess:
 
@@ -194,18 +213,22 @@ class regression():
 
 			for epoch in range(0, self.max_epoch):
 
-				for itr in range(0, int(self.num_train_days - self.feature_size)):
+				for itr in range(0, int(self.num_train_days - self.feature_size-1)):
 					
 					temp_input_feature, temp_output = self.get_inputs(itr, self.feature_size, "train")
+
+					# print(temp_input_feature.shape, temp_output.shape)
+					# sys.exit()
 
 					_, temp_loss = sess.run([self.loss_optimizer, self.loss], 
 						feed_dict={self.input_feature:temp_input_feature, self.output_value:temp_output})
 
-					if(itr%1000 == 0):
+					if(itr%100 == 0):
 						print("In the epoch " + str(epoch) + " and the iteration " + str(itr) + " with a loss of " + str(temp_loss))
 
+			sys.exit()
 
-				saver.save(sess,os.path.join(self.check_dir,"Regress"),global_step=epoch)
+				# saver.save(sess,os.path.join(self.check_dir,"Regress"),global_step=epoch)
 
 
 	def test(self):
