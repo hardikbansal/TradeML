@@ -95,14 +95,14 @@ class regression():
 
 	def get_inputs(self, itr, feature_size, mode="train"):
 
-		# if(self.model == "simple"):
+		if(self.model == "simple"):
 
-		# 	if(mode == "train"):
-		# 		mean_val, std_val = np.mean(self.train_data[:, itr:itr+feature_size], keepdims=True)
-		# 		return (self.train_data[:, itr:itr+feature_size] - mean_val)/std_val, (self.train_data[:, itr+feature_size:itr+feature_size+1] - mean_val)/std_val
-		# 	elif(mode == "test"):
-		# 		mean_val, std_val = np.mean(self.test_data[:, itr:itr+feature_size], keepdims=True)
-		# 		return (self.test_data[:, itr:itr+feature_size] - mean_val)/std_val, (self.test_data[:, itr+feature_size:itr+feature_size+1] - mean_val)/std_val
+			if(mode == "train"):
+				mean_val, std_val = np.mean(self.train_data[:, itr:itr+feature_size], keepdims=True)
+				return (self.train_data[:, itr:itr+feature_size] - mean_val)/std_val, (self.train_data[:, itr+feature_size:itr+feature_size+1] - mean_val)/std_val
+			elif(mode == "test"):
+				mean_val, std_val = np.mean(self.test_data[:, itr:itr+feature_size], keepdims=True)
+				return (self.test_data[:, itr:itr+feature_size] - mean_val)/std_val, (self.test_data[:, itr+feature_size:itr+feature_size+1] - mean_val)/std_val
 
 		if(self.model == "cnn"):
 
