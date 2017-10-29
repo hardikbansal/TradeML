@@ -48,7 +48,6 @@ class regression():
 		self.dataset_dir = opt.dataset_dir
 		self.feature_size = opt.feature_size
 		self.feature_depth = 1
-		self.num_train_days = 2000
 
 		self.tensorboard_dir = "./output/" + self.model + "/tensorboard"
 		self.check_dir = "./output/"+ self.model  +"/checkpoints"
@@ -64,15 +63,31 @@ class regression():
 
 	def divide_data(self):
 
+		size = np.shape(self.adj_close)
+
+		self.num_train_days = 0.9*size[1]
+
+		# Dividing the data into test and train data
+		# Here the train vector is 90% or original data
+		# and rest in test data
+
 		self.train_data = self.adj_close[:, :self.num_train_days]
 		self.test_data = self.adj_close[:, self.num_train_days:]
+
+		# Shape of self.train_data = [1, self.num_train_days]
 
 		self.num_test_days = self.test_data.size
 
 		# print(self.train_data.shape)
+		
+		# Changing the shape of training data for "cnn" model
+		# from [1, self.num_train_days] -> [1(self.batch_size), self.num_train_days, 1(self.feature_depth)]
+		
 		if(self.model == "cnn"):
 			self.train_data = np.reshape(self.train_data, [1, -1, 1])
 			self.test_data = np.reshape(self.test_data, [1, -1, 1])
+		
+
 		# print(self.train_data.shape)
 
 
@@ -96,7 +111,7 @@ class regression():
 
 	def simple_model_setup(self):
 
-		with tf.variable_scope("Simple_Model") as scope:
+		with tf.variable_scope("model_simple") as scope:
 
 			self.input_feature = tf.placeholder(tf.float32, [self.batch_size, self.feature_size])
 			self.output_value = tf.placeholder(tf.float32, [self.batch_size, 1])
@@ -108,7 +123,7 @@ class regression():
 
 	def cnn_model_setup(self):
 
-		with tf.variable_scope("CNN") as scope:
+		with tf.variable_scope("model_cnn") as scope:
 
 			self.input_feature = tf.placeholder(tf.float32, [self.batch_size, self.feature_size, self.feature_depth])
 			self.output_value = tf.placeholder(tf.float32, [self.batch_size, 1])
@@ -129,7 +144,7 @@ class regression():
 
 	def model_setup(self):
 
-		with tf.variable_scope("Model") as scope:
+		with tf.variable_scope("model") as scope:
 
 			if(self.model == "simple"):
 				self.simple_model_setup()
@@ -155,7 +170,7 @@ class regression():
 		self.model_setup()
 		self.loss_setup()
 		self.load_dataset()
-		self.	()
+		self.divide_data()
 
 		# sys.exit()
 
