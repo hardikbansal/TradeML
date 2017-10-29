@@ -131,6 +131,10 @@ class regression():
 		self.input_data, self.output_data = pre_process(self.train_data, tmp_size[0], self.feature_size)
 		self.output_data = np.reshape(self.output_data, [-1, 1])
 
+		tmp_size = self.test_data.shape
+		self.test_input_data, self.test_output_data = pre_process(self.test_data, tmp_size[0], self.feature_size)
+		self.test_output_data = np.reshape(self.test_output_data, [-1, 1])
+
 		input_data_size = self.input_data.shape[0]
 
 		# print(self.input_data, self.output_data)
@@ -155,9 +159,13 @@ class regression():
 				chkpt_fname = tf.train.latest_checkpoint(self.check_dir)
 				saver.restore(sess,chkpt_fname)
 
+			temp_test_input_feature = self.test_input_data[:self.batch_size]
+			temp_test_output = self.test_output_data[:self.batch_size]
+			# print(temp_test_input_feature, temp_test_output)
+			# sys.exit()
+
 			for epoch in range(0, self.max_epoch):
 
-				print(input_data_size, self.batch_size)
 
 				for itr in range(0, (int)(input_data_size/self.batch_size)):
 					
@@ -170,8 +178,12 @@ class regression():
 					_, temp_loss = sess.run([self.loss_optimizer, self.loss], 
 						feed_dict={self.input_feature:temp_input_feature, self.output_value:temp_output})
 
-					if(itr%100 == 0):
-						print("In the epoch " + str(epoch) + " and the iteration " + str(itr) + " with a loss of " + str(temp_loss))
+					# if(itr%100 == 0):
+					# 	print("In the epoch " + str(epoch) + " and the iteration " + str(itr) + " with a loss of " + str(temp_loss))
+
+				temp_loss = sess.run([self.loss], 
+						feed_dict={self.input_feature:temp_test_input_feature, self.output_value:temp_output})
+				print("In the epoch " + str(epoch) + " with a loss of " + str(temp_loss))				
 
 
 				# saver.save(sess,os.path.join(self.check_dir,"Regress"),global_step=epoch)
