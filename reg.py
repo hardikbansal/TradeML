@@ -173,9 +173,11 @@ class regression():
 				# print("New prediction is : ", temp_pred)				
 
 				for itr in range(0, (int)(input_data_size/self.batch_size)):
+
+					indexes = random.sample(range(0, input_data_size), self.batch_size)
 					
-					temp_input_feature = self.input_data[itr*self.batch_size:(itr+1)*self.batch_size]
-					temp_output = self.output_data[itr*self.batch_size:(itr+1)*self.batch_size]
+					temp_input_feature = self.input_data[indexes]
+					temp_output = self.output_data[indexes]
 
 					# print(temp_input_feature.shape, temp_output.shape)
 					# sys.exit()
