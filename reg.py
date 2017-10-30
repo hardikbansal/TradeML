@@ -161,11 +161,16 @@ class regression():
 
 			temp_test_input_feature = self.test_input_data[:self.batch_size]
 			temp_test_output = self.test_output_data[:self.batch_size]
-			# print(temp_test_input_feature, temp_test_output)
+			# print(temp_test_output)
 			# sys.exit()
 
 			for epoch in range(0, self.max_epoch):
 
+				temp_loss, temp_pred = sess.run([self.loss, self.pred], 
+						feed_dict={self.input_feature:temp_test_input_feature, self.output_value:temp_test_output})
+				
+				print("In the epoch " + str(epoch) + " with a loss of " + str(temp_loss))
+				# print("New prediction is : ", temp_pred)				
 
 				for itr in range(0, (int)(input_data_size/self.batch_size)):
 					
@@ -181,9 +186,6 @@ class regression():
 					# if(itr%100 == 0):
 					# 	print("In the epoch " + str(epoch) + " and the iteration " + str(itr) + " with a loss of " + str(temp_loss))
 
-				temp_loss = sess.run([self.loss], 
-						feed_dict={self.input_feature:temp_test_input_feature, self.output_value:temp_output})
-				print("In the epoch " + str(epoch) + " with a loss of " + str(temp_loss))				
 
 
 				# saver.save(sess,os.path.join(self.check_dir,"Regress"),global_step=epoch)
